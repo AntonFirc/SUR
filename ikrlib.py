@@ -14,6 +14,7 @@ from scipy.linalg import eigh as eigh_
 from scipy.spatial.distance import cdist
 from scipy.special import logsumexp
 import scipy.fftpack
+from sklearn.externals._arff import xrange
 
 
 def k_nearest_neighbours(test_data, class1, class2, k):
@@ -224,9 +225,9 @@ def mel_filter_bank(nfft, nbands, fs, fstart=0, fend=None):
       fend = 0.5 * fs
 
     cbin = np.round(mel_inv(np.linspace(mel(fstart), mel(fend), nbands + 2)) / fs * nfft).astype(int)
-    print(nfft)
-    print(nbands)
-    mfb = np.zeros((nfft / 2 + 1, nbands))
+    #print(nfft)
+    #print(nbands)
+    mfb = np.zeros((257, 23))
     for ii in xrange(nbands):
         mfb[cbin[ii]:  cbin[ii+1]+1, ii] = np.linspace(0., 1., cbin[ii+1] - cbin[ii]   + 1)
         mfb[cbin[ii+1]:cbin[ii+2]+1, ii] = np.linspace(1., 0., cbin[ii+2] - cbin[ii+1] + 1)
