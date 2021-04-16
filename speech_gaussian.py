@@ -36,6 +36,9 @@ def process_speaker(speaker_dir):
     gmm = GaussianMixture(n_components=gaussian_cnt, max_iter=10).fit(features)
     gmm_arr.insert(speaker_idx, gmm)
 
+    print(gmm.weights_)
+    print(gmm.means_)
+
     print('Speaker {0} finished!'.format(speaker_idx))
 
 for speaker_dir in train_path.iterdir():
