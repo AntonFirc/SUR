@@ -1,3 +1,4 @@
+import subprocess
 from multiprocessing.pool import ThreadPool
 from sklearn.mixture import GaussianMixture
 import librosa as l
@@ -5,16 +6,31 @@ from pathlib import Path
 import numpy as np
 from tqdm import tqdm
 import collections
+from audio_tools import AudioTools
 
 class_cnt = 31
-gaussian_cnt = 10
+gaussian_cnt = 20
 
-dev_path = Path('./dataset/dev')
-train_path = Path('./dataset/train')
+rm_tmp = [
+    'rm',
+    '-rf',
+    './tmp',
+]
+subprocess.call(rm_tmp)
+
+dev_orig_path = Path('./dataset/dev')
+train_orig_path = Path('./dataset/train')
+
+dev_path = Path('./tmp/dev')
+train_path = Path('./tmp/train')
+
+AudioTools.sox_prepare_dataset(train_orig_path, train_path)
+AudioTools.sox_prepare_dataset(dev_orig_path, dev_path)
+
+AudioTools.sox_augument_dataset(train_path)
 
 speakers = []
 gmm_arr = {}
-
 
 def train_speaker(speaker_dir):
     speaker_features = []
@@ -30,7 +46,7 @@ def train_speaker(speaker_dir):
 
     features = np.concatenate(speaker_features, axis=0)
 
-    gmm = GaussianMixture(n_components=gaussian_cnt, max_iter=10).fit(features)
+    gmm = GaussianMixture(n_components=gaussian_cnt, max_iter=200).fit(features)
     gmm_arr[speaker_idx] = gmm
 
 
@@ -53,7 +69,7 @@ def evaluate_model():
     attempts = 0
     true_accept = 0
 
-    for dev_dir in train_path.iterdir():
+    for dev_dir in tqdm(dev_path.iterdir(), 'Eval', len(list(dev_path.iterdir())), unit='speakers'):
         if str(dev_dir).__contains__('.DS_Store'):
             continue
 
@@ -91,7 +107,7 @@ with ThreadPool(8) as pool:
                 train_speaker,
                 speakers
             ),
-            'Process',
+            'Train',
             len(speakers),
             unit="speakers"
         )
@@ -100,32 +116,3 @@ with ThreadPool(8) as pool:
 gmm_ord = collections.OrderedDict(sorted(gmm_arr.items()))
 
 evaluate_model()
-
-# weights = []
-# means = []
-# covs = []
-#
-# for i in range(len(gmm_arr)):
-#     weights.append(gmm_arr[i].weights_)
-#     means.append(gmm_arr[i].means_)
-#     covs.append(gmm_arr[i].covariances_)
-#
-# np.save('weights', np.array(weights))
-# np.save('covs', np.array(covs))
-# np.save('means', np.array(means))
-
-# def load_gmm():
-#     weights = np.load('weights.npy')
-#     covs = np.load('covs.npy')
-#     means = np.load('means.npy')
-#
-#     assert len(weights) == len(covs) == len(means)
-#
-#     nb_components = len(weights)
-#
-#     for i in range(nb_components):
-#         gmm = GaussianMixture(n_components=nb_components, max_iter=2000)
-#         gmm.means_ = means[i]
-#         gmm.covariances_ = covs[i]
-#         gmm.weights_ = weights[i]
-#         gmm_arr.insert(i + 1, gmm)

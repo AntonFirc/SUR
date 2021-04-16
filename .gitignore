@@ -131,4 +131,4 @@ dmypy.json
 # SUR project
 .idea/
 dataset/
-/conda/
+tmp/
