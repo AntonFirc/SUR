@@ -12,7 +12,7 @@ from scipy.io import wavfile
 from scipy.linalg import eigh as eigh_
 #from scipy.ndimage import imread
 from scipy.spatial.distance import cdist
-from scipy.misc import logsumexp
+from scipy.special import logsumexp
 import scipy.fftpack
 
 
@@ -224,6 +224,8 @@ def mel_filter_bank(nfft, nbands, fs, fstart=0, fend=None):
       fend = 0.5 * fs
 
     cbin = np.round(mel_inv(np.linspace(mel(fstart), mel(fend), nbands + 2)) / fs * nfft).astype(int)
+    print(nfft)
+    print(nbands)
     mfb = np.zeros((nfft / 2 + 1, nbands))
     for ii in xrange(nbands):
         mfb[cbin[ii]:  cbin[ii+1]+1, ii] = np.linspace(0., 1., cbin[ii+1] - cbin[ii]   + 1)
@@ -300,16 +302,16 @@ def wav16khz2mfcc(dir_name):
     return features
 
 
-def png2fea(dir_name):
-    """
-    Loads all *.png images from directory dir_name into a dictionary. Keys are the file names
-    and values and 2D numpy arrays with corresponding grayscale images
-    """
-    features = {}
-    for f in glob(dir_name + '/*.png'):
-        print('Processing file: ', f)
-        features[f] = imread(f, True).astype(np.float64)
-    return features
+# def png2fea(dir_name):
+#     """
+#     Loads all *.png images from directory dir_name into a dictionary. Keys are the file names
+#     and values and 2D numpy arrays with corresponding grayscale images
+#     """
+#     features = {}
+#     for f in glob(dir_name + '/*.png'):
+#         print('Processing file: ', f)
+#         features[f] = imread(f, True).astype(np.float64)
+#     return features
 
 def demo_gmm():
     x1 = hstack([rand_gauss(400, array([50, 40]), array([[100, 70], [70, 100]])),
