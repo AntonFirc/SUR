@@ -27,6 +27,9 @@ train_path = Path('./tmp/train')
 AudioTools.sox_prepare_dataset(train_orig_path, train_path)
 AudioTools.sox_prepare_dataset(dev_orig_path, dev_path)
 
+#AudioTools.sox_remove_noise_dataset(train_path)
+#AudioTools.sox_remove_noise_dataset(dev_path)
+
 AudioTools.sox_augument_dataset(train_path)
 
 speakers = []

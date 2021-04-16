@@ -139,27 +139,31 @@ class AudioTools:
             if not str(speaker_file).endswith('.wav'):
                 continue
 
-            tmp_file = Path(dst_dir).joinpath('tmp-{0}.wav'.format(speaker_idx))
+            tmp_file = Path(str(speaker_file).replace('.wav', '-noise.prof'))
 
-            sox_slow = [
+            sox_noise_prof = [
                 "sox",
                 str(speaker_file),
                 "-n",
                 "noiseprof",
                 str(tmp_file)
             ]
-            s = subprocess.call(sox_slow)
+            s = subprocess.call(sox_noise_prof)
 
-            dest_file = Path(str(speaker_file).replace('.wav', '-f.wav'))
+            dest_file = Path(str(speaker_file).replace('.wav', '-d.wav'))
 
-            sox_fast = [
+            sox_noise_remove = [
                 "sox",
                 str(speaker_file),
-                str(dest_fast_file),
-                "tempo",
-                "1.2"
+                str(dest_file),
+                "noisered",
+                str(tmp_file),
+                "0.2"
             ]
-            s = subprocess.call(sox_fast)
+            s = subprocess.call(sox_noise_remove)
+
+            os.remove(tmp_file)
+            os.remove(speaker_file)
 
     @classmethod
     def sox_remove_noise_dataset(cls, dataset_path, thread_count=4):
@@ -174,10 +178,10 @@ class AudioTools:
             list(
                 tqdm(
                     pool.imap(
-                        cls.sox_augument_speaker,
+                        cls.sox_remove_noise_speaker,
                         speakers
                     ),
-                    'Augument',
+                    'Remove noise',
                     len(speakers),
                     unit="speakers"
                 )
