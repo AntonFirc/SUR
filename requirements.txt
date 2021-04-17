@@ -6,3 +6,5 @@ librosa
 tqdm
 webrtcvad
 imread
+cmake
+dlib
