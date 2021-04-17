@@ -77,7 +77,7 @@ class AudioTools:
                         cls.sox_speaker_remove_silence,
                         speakers
                     ),
-                    'Sox',
+                    'Remove silence',
                     len(speakers),
                     unit="speakers"
                 )
@@ -100,17 +100,6 @@ class AudioTools:
                     str(option)
                 ]
                 s = subprocess.call(sox_slow)
-
-            # dest_fast_file = Path(str(speaker_file).replace('.wav', '-f.wav'))
-            #
-            # sox_fast = [
-            #     "sox",
-            #     str(speaker_file),
-            #     str(dest_fast_file),
-            #     "tempo",
-            #     "1.1"
-            # ]
-            # s = subprocess.call(sox_fast)
 
     @classmethod
     def sox_augument_dataset(cls, dataset_path, aug_options=None, thread_count=4):
