@@ -7,6 +7,7 @@ from pathlib import Path
 
 class AudioTools:
     out_dir = Path('tmp')
+    aug_options = [0.9, 1.1]
 
     @classmethod
     def sox_speaker_remove_silence(cls, speaker_path):
@@ -88,31 +89,35 @@ class AudioTools:
             if not str(speaker_file).endswith('.wav'):
                 continue
 
-            dest_slow_file = Path(str(speaker_file).replace('.wav', '-s.wav'))
+            for option in cls.aug_options:
+                dest_file = Path(str(speaker_file).replace('.wav', '-{0}.wav'.format(str(option))))
 
-            sox_slow = [
-                "sox",
-                str(speaker_file),
-                str(dest_slow_file),
-                "tempo",
-                "0.8"
-            ]
-            s = subprocess.call(sox_slow)
+                sox_slow = [
+                    "sox",
+                    str(speaker_file),
+                    str(dest_file),
+                    "tempo",
+                    str(option)
+                ]
+                s = subprocess.call(sox_slow)
 
-            dest_fast_file = Path(str(speaker_file).replace('.wav', '-f.wav'))
-
-            sox_fast = [
-                "sox",
-                str(speaker_file),
-                str(dest_fast_file),
-                "tempo",
-                "1.2"
-            ]
-            s = subprocess.call(sox_fast)
+            # dest_fast_file = Path(str(speaker_file).replace('.wav', '-f.wav'))
+            #
+            # sox_fast = [
+            #     "sox",
+            #     str(speaker_file),
+            #     str(dest_fast_file),
+            #     "tempo",
+            #     "1.1"
+            # ]
+            # s = subprocess.call(sox_fast)
 
     @classmethod
-    def sox_augument_dataset(cls, dataset_path, thread_count=4):
+    def sox_augument_dataset(cls, dataset_path, aug_options=None, thread_count=4):
         speakers = []
+
+        if aug_options is not None:
+            cls.aug_options = aug_options
 
         for speaker_dir in dataset_path.iterdir():
             if str(speaker_dir).__contains__('.DS_Store'):
