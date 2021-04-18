@@ -68,7 +68,7 @@ class SpeechGaussian:
         attempts = 0
         true_accept = 0
 
-        for dev_dir in tqdm(cls.dev_path.iterdir(), 'Eval', len(list(cls.dev_path.iterdir())), unit='speakers'):
+        for dev_dir in tqdm(cls.dev_path.iterdir(), 'Eval', len(list(cls.dev_path.iterdir())), unit='speaker'):
             if str(dev_dir).__contains__('.DS_Store'):
                 continue
 
@@ -111,7 +111,7 @@ class SpeechGaussian:
                     ),
                     'Train',
                     len(cls.speakers),
-                    unit="speakers"
+                    unit="speaker"
                 )
             )
 

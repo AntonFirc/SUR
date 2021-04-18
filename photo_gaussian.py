@@ -1,23 +1,35 @@
 import collections
 from multiprocessing.pool import ThreadPool
-
+from image_tools import ImageTools
 from imread import imread
 from sklearn.mixture import GaussianMixture
-import librosa as l
 from pathlib import Path
 import numpy as np
 from tqdm import tqdm
+import subprocess
 
 import png
 
 class_cnt = 31
-gaussian_cnt = 10
+gaussian_cnt = 2
 
-dev_path = Path('./dataset/dev')
-train_path = Path('./dataset/train')
+dev_path = Path('./tmp/faces/dev')
+train_path = Path('./tmp/faces/train')
 
 participants = []
 gmm_arr = {}
+
+# rm_tmp = [
+#     'rm',
+#     '-rf',
+#     './tmp/faces',
+# ]
+# subprocess.call(rm_tmp)
+#
+# ImageTools.frontalize_dataset(Path('dataset/train'), Path('tmp/faces/train'), thread_count=8)
+# ImageTools.frontalize_dataset(Path('dataset/dev'), Path('tmp/faces/dev'), thread_count=8)
+#
+# ImageTools.augument_dataset(Path('tmp/faces/train'))
 
 
 def train_participant(photo_dir):
@@ -77,9 +89,9 @@ with ThreadPool(1) as pool:
                 train_participant,
                 participants
             ),
-            'Process',
+            'Train',
             len(participants),
-            unit="participants"
+            unit="participant"
         )
     )
 

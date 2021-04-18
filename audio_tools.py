@@ -79,7 +79,7 @@ class AudioTools:
                     ),
                     'Remove silence',
                     len(speakers),
-                    unit="speakers"
+                    unit="speaker"
                 )
             )
 
@@ -122,7 +122,7 @@ class AudioTools:
                     ),
                     'Augument',
                     len(speakers),
-                    unit="speakers"
+                    unit="speaker"
                 )
             )
 
@@ -177,6 +177,6 @@ class AudioTools:
                     ),
                     'Remove noise',
                     len(speakers),
-                    unit="speakers"
+                    unit="speaker"
                 )
             )
