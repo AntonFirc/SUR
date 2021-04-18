@@ -4,4 +4,7 @@ scipy
 sklearn
 librosa
 tqdm
+webrtcvad
 imread
+cmake
+dlib
