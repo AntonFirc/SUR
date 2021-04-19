@@ -9,14 +9,14 @@ from image_tools import ImageTools
 from matplotlib import pyplot as plt
 
 from imread import imread
-from sklearn.mixture import GaussianMixture
 from sklearn.decomposition import PCA
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis as LDA
-import librosa as l
 from pathlib import Path
 import numpy as np
 from tqdm import tqdm
 import subprocess
+from collections import OrderedDict
+from sklearn.mixture import GaussianMixture
 
 class_cnt = 31
 gaussian_cnt = 2
@@ -33,6 +33,9 @@ gmm_arr = {}
 class PhotoGenerative:
     wc_cov = None
     class_means = None
+
+    gaussian_cnt = 2
+    gmm_ord = None
 
     dev_path = Path('./dataset/dev')
     train_path = Path('./dataset/train')
@@ -107,6 +110,60 @@ class PhotoGenerative:
         cls.class_means = class_means
 
     @classmethod
+    def train_gmm(cls):
+        lda_train, _ = cls.transform_data(cls.train_path)
+
+        cls.gmm_ord = OrderedDict()
+
+        for i in range(class_cnt):
+            lda_fea_class = lda_train[i * 6:i * 6 + 5, :]
+            cls.gmm_ord[i] = GaussianMixture(n_components=cls.gaussian_cnt, max_iter=2000).fit(lda_fea_class)
+
+    @classmethod
+    def gmm_eval_person(cls, lda_data):
+        scores = []
+
+        for key in cls.gmm_ord:
+            scores.append(sum(cls.gmm_ord[key].score_samples(lda_data.T)))
+
+        np_s = np.array(scores)
+        return np_s.argmax() + 1, np_s
+
+    @classmethod
+    def gmm_eval_model(cls):
+        attempts = 0
+        results = []
+
+        lda_eval, target_labels = cls.transform_data(cls.dev_path)
+
+        for person in tqdm(lda_eval, 'Eval', len(lda_eval), unit='image'):
+            attempts += 1
+            pred_class, _ = cls.gmm_eval_person(person.reshape(-1, 1))
+            results.append(pred_class)
+
+        res_np = np.stack(results)
+        err = np.count_nonzero(res_np - target_labels)
+        acc = 1 - (err / len(target_labels))
+
+        print('Total accuracy: {0}%'.format(acc * 100))
+
+
+        # for dev_dir in tqdm(cls.dev_path.iterdir(), 'Eval', len(list(cls.dev_path.iterdir())), unit='speaker'):
+        #     if str(dev_dir).__contains__('.DS_Store'):
+        #         continue
+        #
+        #     gt_idx = int(str(dev_dir).split('/').pop())
+        #
+        #     for person_image in dev_dir.iterdir():
+        #         if str(person_image).endswith('.png'):
+        #             attempts += 1
+        #             pred_class, _ = cls.gmm_eval_person(person_image)
+        #             true_accept += 1 if pred_class == gt_idx else 0
+        #
+        # model_acc = (true_accept / attempts)
+        # print('Total accuracy: {0}%'.format(model_acc * 100))
+
+    @classmethod
     def classify_data(cls, lda_data):
         res_arr = []
 
@@ -159,8 +216,11 @@ class PhotoGenerative:
 
 pg = PhotoGenerative()
 
-for i in range(3):
-    pg.train_participants()
-    print(pg.wc_cov.sum())
-    print(pg.class_means.sum())
-    pg.evaluate_model()
+pg.train_gmm()
+pg.gmm_eval_model()
+
+# for i in range(3):
+#     pg.train_participants()
+#     print(pg.wc_cov.sum())
+#     print(pg.class_means.sum())
+#     pg.evaluate_model()
