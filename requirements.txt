@@ -8,3 +8,6 @@ webrtcvad
 imread
 cmake
 dlib
+keras
+keras_vggface
+tensorflow
