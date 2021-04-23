@@ -45,7 +45,7 @@ class ImageTools:
         except IndexError:
             return
         # load mask to exclude eyes from symmetry
-        eyemask = np.asarray(io.loadmat('face_frontalization/frontalization_models/eyemask.mat')['eyemask'])
+        eyemask = np.asarray(io.loadmat('../face_frontalization/frontalization_models/eyemask.mat')['eyemask'])
         # perform frontalization
         frontal_raw, frontal_sym = frontalize.frontalize(img, proj_matrix, model3D.ref_U, eyemask)
 

@@ -13,8 +13,8 @@ from pathlib import Path
 from PIL import Image
 
 
-dev_path = Path('./dataset/dev')
-train_path = Path('./dataset/train')
+dev_path = Path('../dataset/dev')
+train_path = Path('../dataset/train')
 dev_path2 = Path('./2dataset/dev')
 train_path2 = Path('./2dataset/train')
 

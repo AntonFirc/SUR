@@ -27,8 +27,8 @@ class_cnt = 15
 PCA_dim = 60
 LDA_dim = 30
 
-dev_path = Path('./dataset/dev')
-train_path = Path('./dataset/train')
+dev_path = Path('../dataset/dev')
+train_path = Path('../dataset/train')
 
 gmm_arr = {}
 
@@ -46,8 +46,8 @@ class PhotoGenerative:
     # train_path = Path('./dataset/train')
     # dev_path = Path('./tmp/faces_new/dev')
     # train_path = Path('./tmp/faces_new/train')
-    dev_path = Path('./dataset/dev2')
-    train_path = Path('./dataset/yale')
+    dev_path = Path('../dataset/dev2')
+    train_path = Path('../dataset/yale')
 
     @classmethod
     def png2fea(cls, dir_name):

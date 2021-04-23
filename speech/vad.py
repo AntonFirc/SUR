@@ -7,7 +7,7 @@ from tqdm import tqdm
 import os
 import collections
 
-outpath = Path('./tmp')
+outpath = Path('../tmp')
 
 
 def process_dataset(dataset_path, output_path, thread_pool=4):
