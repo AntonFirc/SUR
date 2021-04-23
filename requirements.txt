@@ -1,3 +1,4 @@
+tensorflow==2.0
 matplotlib
 numpy
 scipy
@@ -8,3 +9,4 @@ webrtcvad
 imread
 cmake
 dlib
+IPython

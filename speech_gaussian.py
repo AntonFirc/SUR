@@ -19,11 +19,13 @@ class SpeechGaussian:
     class_cnt = 31
     gaussian_cnt = 2
 
-    dev_orig_path = Path('./dataset/dev')
-    train_orig_path = Path('./dataset/train')
+    dev_orig_path = Path('./dataset/dev2')
+    eval_orig_path = Path('./dataset/eval_t')
+    train_orig_path = Path('./dataset/train_big')
 
-    dev_path = Path('./tmp/dev')
-    train_path = Path('./tmp/train')
+    dev_path = Path('./tmp/dev2')
+    eval_path = Path('./tmp/eval')
+    train_path = Path('./tmp/train_big')
 
     @classmethod
     def waw_2_mfcc(cls, waw_path):
@@ -35,7 +37,7 @@ class SpeechGaussian:
         return np.concatenate((mfccs, mfcc_delta), axis=1)
 
     @classmethod
-    def train_speaker(cls, speaker_dir):
+    def gmm_train_speaker(cls, speaker_dir):
         speaker_features = []
         speaker_idx = int(str(speaker_dir).split('/').pop())
 
@@ -49,7 +51,7 @@ class SpeechGaussian:
         cls.gmm_arr[speaker_idx] = gmm
 
     @classmethod
-    def eval_speaker(cls, recording_path):
+    def gmm_eval_speaker(cls, recording_path):
         scores = []
 
         try:
@@ -64,7 +66,7 @@ class SpeechGaussian:
         return np_s.argmax() + 1, np_s
 
     @classmethod
-    def evaluate_model(cls):
+    def gmm_evaluate_model(cls):
         attempts = 0
         true_accept = 0
 
@@ -77,19 +79,27 @@ class SpeechGaussian:
             for speaker_file in dev_dir.iterdir():
                 if str(speaker_file).endswith('.wav'):
                     attempts += 1
-                    pred_class, _ = cls.eval_speaker(speaker_file)
+                    try:
+                        pred_class, _ = cls.gmm_eval_speaker(speaker_file)
+                    except TypeError:
+                        print(str(speaker_file))
+                        continue
                     true_accept += 1 if pred_class == gt_idx else 0
 
         model_acc = (true_accept / attempts)
         print('Total accuracy: {0}%'.format(model_acc * 100))
 
     @classmethod
-    def label_data(cls, eval_dir):
+    def gmm_label_data(cls, eval_dir):
         result_file = open("speech_gaussian.txt", "w")
 
         for eval_file in tqdm(eval_dir.iterdir(), 'Label data', len(list(eval_dir.iterdir())), unit='files'):
             if str(eval_file).endswith('.wav'):
-                pred_class, probs = cls.eval_speaker(eval_file)
+                try:
+                    pred_class, probs = cls.gmm_eval_speaker(eval_file)
+                except TypeError:
+                    print(str(eval_file))
+                    continue
                 res_line = '{0} {1} {2}\n'.format(os.path.basename(eval_file).replace('.wav', ''), pred_class,
                                                   ' '.join(str(x) for x in probs))
                 result_file.write(res_line)
@@ -97,7 +107,7 @@ class SpeechGaussian:
         result_file.close()
 
     @classmethod
-    def train_basic(cls):
+    def train_gmm(cls):
         for i in range(cls.class_cnt):
             speaker_dir = cls.train_path.joinpath(str(i + 1))
             cls.speakers.append(speaker_dir)
@@ -106,7 +116,7 @@ class SpeechGaussian:
             list(
                 tqdm(
                     pool.imap(
-                        cls.train_speaker,
+                        cls.gmm_train_speaker,
                         cls.speakers
                     ),
                     'Train',
@@ -118,23 +128,13 @@ class SpeechGaussian:
         cls.gmm_ord = collections.OrderedDict(sorted(cls.gmm_arr.items()))
 
 
-# for speaker_dir in train_path.iterdir():
-#     if str(speaker_dir).__contains__('.DS_Store'):
-#         continue
+# rm_tmp = [
+#     'rm',
+#     '-rf',
+#     './tmp',
+# ]
+# subprocess.call(rm_tmp)
 #
-#     class_cnt += 1
-#     speaker_features = []
-#     speaker_idx = int(str(speaker_dir).split('/').pop())
-#
-#     speakers.append(speaker_dir)
-
-rm_tmp = [
-    'rm',
-    '-rf',
-    './tmp',
-]
-subprocess.call(rm_tmp)
-
 sg = SpeechGaussian()
 
 AudioTools.sox_prepare_dataset(sg.train_orig_path, sg.train_path)
@@ -142,6 +142,8 @@ AudioTools.sox_prepare_dataset(sg.dev_orig_path, sg.dev_path)
 
 AudioTools.sox_augument_dataset(sg.train_path, [0.9, 0.95, 1.05, 1.1])
 
-sg.train_basic()
-sg.evaluate_model()
-sg.label_data(Path('dataset/eval'))
+AudioTools.sox_prepare_dataset(sg.eval_orig_path, sg.eval_path)
+
+sg.train_gmm()
+sg.gmm_evaluate_model()
+sg.gmm_label_data(sg.eval_path.joinpath('eval'))

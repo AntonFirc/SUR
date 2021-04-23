@@ -23,7 +23,27 @@ class AudioTools:
             # tmp_file = Path(dst_dir).joinpath('tmp-{0}.wav'.format(speaker_idx))
             dest_file = dst_dir.joinpath(os.path.basename(speaker_file))
 
-            sox_trim_ends = [
+            # sox_trim_ends = [
+            #     "sox",
+            #     str(speaker_file),
+            #     str(dest_file),
+            #     "silence",
+            #     "1",
+            #     "0.1",
+            #     "1%",
+            #     "reverse",
+            #     "silence",
+            #     "1",
+            #     "0.1",
+            #     "1%",
+            #     "reverse"
+            # ]
+            # s = subprocess.call(sox_trim_ends)
+
+            # translates to "trim all silence until 0.1s of sound is detected,
+            # then trim all silence after 0.7s of silence is detected and repeat
+            # TLDR: removes silence on the beginning and end of recording, and shortens long pauses in the middle
+            sox_trim_inside = [
                 "sox",
                 str(speaker_file),
                 str(dest_file),
@@ -31,29 +51,12 @@ class AudioTools:
                 "1",
                 "0.1",
                 "1%",
-                "reverse",
-                "silence",
-                "1",
-                "0.1",
-                "1%",
-                "reverse"
+                "-1",
+                "0.7",
+                "1%"
             ]
-            s = subprocess.call(sox_trim_ends)
+            s = subprocess.call(sox_trim_inside)
 
-            # sox_trim_inside = [
-            #     "sox",
-            #     str(tmp_file),
-            #     str(dest_file),
-            #     "silence",
-            #     "1",
-            #     "0.1",
-            #     "1%",
-            #     "-1",
-            #     "0.1",
-            #     "1%"
-            # ]
-            # s = subprocess.call(sox_trim_inside)
-            #
             # os.remove(tmp_file)
 
     @classmethod
@@ -180,3 +183,55 @@ class AudioTools:
                     unit="speaker"
                 )
             )
+
+    @classmethod
+    def sox_split_audio_speaker(cls, speaker_path):
+
+        for speaker_file in speaker_path.iterdir():
+            if not str(speaker_file).endswith('.wav'):
+                continue
+
+            tmp_file = Path(str(speaker_file).replace('.wav', '1s.wav'))
+
+            sox_split = [
+                "sox",
+                str(speaker_file),
+                str(tmp_file),
+                "trim",
+                "0",
+                "1",
+                ":",
+                "newfile",
+                ":",
+                "restart",
+            ]
+            s = subprocess.call(sox_split)
+
+            os.remove(speaker_file)
+
+    @classmethod
+    def sox_split_audio(cls, dataset_path, thread_count=4):
+        speakers = []
+
+        for speaker_dir in dataset_path.iterdir():
+            if str(speaker_dir).__contains__('.DS_Store'):
+                continue
+            speakers.append(speaker_dir)
+
+        with ThreadPool(thread_count) as pool:
+            list(
+                tqdm(
+                    pool.imap(
+                        cls.sox_split_audio_speaker,
+                        speakers
+                    ),
+                    'Split audio',
+                    len(speakers),
+                    unit="speaker"
+                )
+            )
+
+
+AudioTools.sox_prepare_dataset(Path('dataset/train_big'), Path('dataset_clean/train_big_aug'))
+AudioTools.sox_augument_dataset(Path('dataset_clean/train_big_aug'), [0.9, 0.95, 1.05, 1.1])
+AudioTools.sox_split_audio(Path('dataset_clean/train_big_aug'))

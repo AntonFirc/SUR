@@ -2,6 +2,7 @@ import collections
 from glob import glob
 from multiprocessing.pool import ThreadPool
 
+import matplotlib.pyplot
 import scipy.sparse.linalg
 
 from image_tools import ImageTools
@@ -17,12 +18,14 @@ from tqdm import tqdm
 import subprocess
 from collections import OrderedDict
 from sklearn.mixture import GaussianMixture
+from sklearn.neural_network import MLPClassifier
+from scipy import ndimage as ndi
+from skimage.filters import gabor_kernel
 
-class_cnt = 31
-gaussian_cnt = 2
+class_cnt = 15
 
 PCA_dim = 60
-LDA_dim = 20
+LDA_dim = 30
 
 dev_path = Path('./dataset/dev')
 train_path = Path('./dataset/train')
@@ -34,13 +37,17 @@ class PhotoGenerative:
     wc_cov = None
     class_means = None
 
-    gaussian_cnt = 2
+    gaussian_cnt = 15
     gmm_ord = None
 
-    dev_path = Path('./dataset/dev')
-    train_path = Path('./dataset/train')
+    kernels = []
+
+    # dev_path = Path('./dataset/dev')
+    # train_path = Path('./dataset/train')
     # dev_path = Path('./tmp/faces_new/dev')
     # train_path = Path('./tmp/faces_new/train')
+    dev_path = Path('./dataset/dev2')
+    train_path = Path('./dataset/yale')
 
     @classmethod
     def png2fea(cls, dir_name):
@@ -58,6 +65,58 @@ class PhotoGenerative:
         return imread(file, True).astype(np.float64)
 
     @classmethod
+    def compute_features(cls, image):
+        feats = []
+
+        for k, kernel in enumerate(cls.kernels):
+            filtered = ndi.convolve(image, kernel, mode='wrap')
+            feats.append(filtered)
+
+        feats = np.stack(feats).flatten()
+        return feats
+
+    @classmethod
+    def transform_gabor(cls, data_src):
+        for theta in range(8):
+            theta = theta / 4. * np.pi
+            for sigma in (1, 5):
+                for frequency in (0.05, 0.4):
+                    kernel = np.real(gabor_kernel(frequency, theta=theta,
+                                                  sigma_x=sigma, sigma_y=sigma))
+                    cls.kernels.append(kernel)
+
+        participants = []
+        class_labels = []
+        feature_list = []
+
+        for i in range(class_cnt):
+            participant_dir = data_src.joinpath(str(i + 1))
+            participants.append(participant_dir)
+
+        for participant_dir in tqdm(participants, 'Gabor demodulation', len(participants), unit='person'):
+            participant_idx = int(str(participant_dir).split('/').pop())
+            photo_features = []
+            for photo in participant_dir.iterdir():
+                # if not str(photo).endswith('.png'):
+                #     continue
+                img = cls.calc_feature(photo)
+                photo_features.append(cls.compute_features(img))
+            class_labels.append(np.ones(len(photo_features)) * participant_idx)
+            feature_list.insert(participant_idx, photo_features)
+
+        reshaped_features = np.concatenate(feature_list)
+        target_labels = np.concatenate(class_labels)
+
+        pca = PCA(n_components=PCA_dim, svd_solver='full', whiten=True)
+        pca_fea = pca.fit_transform(reshaped_features)
+
+        lda = LDA(n_components=LDA_dim)
+        lda_data = lda.fit_transform(pca_fea, target_labels)
+
+        return lda_data, target_labels
+
+
+    @classmethod
     def transform_data(cls, data_src):
         participants = []
 
@@ -66,26 +125,19 @@ class PhotoGenerative:
             participants.append(participant_dir)
 
         feature_list = []
+        class_labels = []
         for participant_dir in participants:
             participant_idx = int(str(participant_dir).split('/').pop())
             photo_features = cls.png2fea(participant_dir)
-            feature_list.insert(participant_idx, photo_features)
+            class_labels.append(np.ones(len(photo_features)) * participant_idx)
+            photo_features_reshaped = np.array(photo_features).reshape(len(photo_features), photo_features[0].shape[0] *
+                                                                       photo_features[0].shape[1])
+            feature_list.insert(participant_idx, photo_features_reshaped)
 
-        photo_feature = feature_list[0]
-        img_cnt = len(photo_feature)
-        shape = photo_feature[0].shape[0] * photo_feature[0].shape[1]
+        reshaped_features = np.concatenate(feature_list)
 
-        reshaped_features = np.array(feature_list).reshape((img_cnt * class_cnt, shape))
-        mean_face = np.mean(reshaped_features, axis=0)
-        features = reshaped_features - mean_face
-
-        pca = PCA(n_components=60, svd_solver='full', whiten=True)
-        pca_fea = pca.fit_transform(features)
-
-        class_labels = []
-
-        for i in range(class_cnt):
-            class_labels.append(np.ones(img_cnt) * (i + 1))
+        pca = PCA(n_components=PCA_dim, svd_solver='full', whiten=True)
+        pca_fea = pca.fit_transform(reshaped_features)
 
         target_labels = np.concatenate(class_labels)
 
@@ -147,21 +199,26 @@ class PhotoGenerative:
 
         print('Total accuracy: {0}%'.format(acc * 100))
 
+    @classmethod
+    def mlp_train(cls):
+        # lda_data, labels = cls.transform_gabor(cls.train_path)
+        lda_data, labels = cls.transform_gabor(cls.train_path)
 
-        # for dev_dir in tqdm(cls.dev_path.iterdir(), 'Eval', len(list(cls.dev_path.iterdir())), unit='speaker'):
-        #     if str(dev_dir).__contains__('.DS_Store'):
-        #         continue
-        #
-        #     gt_idx = int(str(dev_dir).split('/').pop())
-        #
-        #     for person_image in dev_dir.iterdir():
-        #         if str(person_image).endswith('.png'):
-        #             attempts += 1
-        #             pred_class, _ = cls.gmm_eval_person(person_image)
-        #             true_accept += 1 if pred_class == gt_idx else 0
-        #
-        # model_acc = (true_accept / attempts)
-        # print('Total accuracy: {0}%'.format(model_acc * 100))
+        # clf = MLPClassifier(random_state=1, activation='logistic', solver='sgd', learning_rate='adaptive',
+        #                     early_stopping=True, max_iter=1000).fit(lda_data, labels)
+        #clf = MLPClassifier(max_iter=1000, early_stopping=True, solver='sgd', learning_rate='invscaling', alpha=0.5, hidden_layer_sizes=(100, 100,)).fit(lda_data, labels)
+        clf = MLPClassifier(early_stopping=True, max_iter=500).fit(lda_data, labels)
+
+        eval_data, eval_labels = cls.transform_data(cls.train_path)
+
+        log_probs = clf.predict_log_proba(eval_data)
+
+        class_idx = np.argmax(log_probs, axis=1) + 1
+
+        err = np.count_nonzero(class_idx - eval_labels)
+        acc = 1 - (err / len(eval_labels))
+
+        print('Total accuracy: {0}%'.format(acc * 100))
 
     @classmethod
     def classify_data(cls, lda_data):
@@ -206,7 +263,7 @@ class PhotoGenerative:
 #     './tmp/faces',
 # ]
 # subprocess.call(rm_tmp)
-
+#
 # ImageTools.frontalize_dataset(Path('dataset/train'), Path('tmp/faces_new/train'), thread_count=8)
 # ImageTools.frontalize_dataset(Path('dataset/dev'), Path('tmp/faces_new/dev'), thread_count=8)
 #
@@ -216,8 +273,11 @@ class PhotoGenerative:
 
 pg = PhotoGenerative()
 
-pg.train_gmm()
-pg.gmm_eval_model()
+pg.mlp_train()
+
+#
+# pg.train_gmm()
+# pg.gmm_eval_model()
 
 # for i in range(3):
 #     pg.train_participants()
