@@ -1,4 +1,4 @@
-tensorflow==2.0
+tensorflow-gpu
 matplotlib
 numpy
 scipy
@@ -10,3 +10,5 @@ imread
 cmake
 dlib
 IPython
+keras
+keras_vggface
