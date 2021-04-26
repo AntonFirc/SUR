@@ -9,16 +9,44 @@ from matplotlib.pyplot import imread
 from scipy.spatial.distance import cosine
 import urllib.request
 from pathlib import Path
+from matplotlib import pyplot as plt
+from mtcnn import MTCNN
+from numpy import asarray
+from PIL import Image
 
 from PIL import Image
 
 
 dev_path = Path('../dataset/dev')
 train_path = Path('../dataset/train')
-dev_path2 = Path('./2dataset/dev')
-train_path2 = Path('./2dataset/train')
+dev_path2 = Path('../2dataset/dev')
+train_path2 = Path('../2dataset/train')
 
 class_cnt = 31
+
+
+def extract_face_from_image(image_path, detector, required_size=(224, 224)):
+  # load image and detect faces
+    image = plt.imread(image_path)
+    faces = detector.detect_faces(image)
+
+    face_image = None
+
+    for face in faces:
+        # extract the bounding box from the requested face
+        x1, y1, width, height = face['box']
+        x2, y2 = x1 + width, y1 + height
+
+        # extract the face
+        face_boundary = image[y1:y2, x1:x2]
+
+        # resize pixels to the model size
+        face_image = Image.fromarray(face_boundary)
+        face_image = face_image.resize(required_size)
+        face_array = asarray(face_image)
+        face_image = face_array
+
+    return face_image
 
 
 def load_faces(dir_path):
@@ -29,23 +57,21 @@ def load_faces(dir_path):
         participants.append(participant_dir)
 
     feature_list = []
+    # detector = MTCNN()
     for participant_dir in participants:
         participant_idx = int(str(participant_dir).split('/').pop())
         photo_features = []
         for f in glob(str(participant_dir) + '/*.png'):
-            image = imread(f, True).astype(np.float64)
+            # image = Image.open(f)
+            # image = extract_face_from_image(f, detector=detector)
+            image = imread(f)
             photo_features.append(image)
         feature_list.insert(participant_idx, photo_features)
 
     img_cnt = len(feature_list[0])
-    faces = np.array(feature_list).reshape((img_cnt * class_cnt, 224, 224, 3))
-    return faces
+    images = np.array(feature_list).reshape((img_cnt * class_cnt, 80, 80, 3))
 
-
-def store_image(url, local_file_name):
-  with urllib.request.urlopen(url) as resource:
-    with open(local_file_name, 'wb') as f:
-      f.write(resource.read())
+    return images
 
 
 def get_model_scores(faces):
@@ -59,17 +85,20 @@ def get_model_scores(faces):
     #   include_top=False,
     #   input_shape=(80, 80, 3),
     #   pooling='avg')
-    model = VGGFace(model='resnet50',
+    model = VGGFace(model='vgg16',
       include_top=False,
-      input_shape=(224, 224, 3),
-      pooling='avg')
+      weights='vggface',
+      input_shape=(80, 80, 3),
+      pooling='avg'
+        )
 
     # perform prediction
     return model.predict(samples)
 
-# facesX = load_faces(dev_path2)
-facesX = load_faces(train_path2)
-facesY = load_faces(train_path2)
+
+facesX = load_faces(dev_path)
+# facesX = load_faces(train_path2)
+facesY = load_faces(train_path)
 
 model_scores_xi = get_model_scores(facesX)
 model_scores_yi = get_model_scores(facesY)
@@ -83,19 +112,20 @@ for idx, face_score_1 in enumerate(model_scores_xi):
         scores.append(score)
 
     np_s = np.array(scores)
-    print(idx, np_s.argmin() // 6, scores[np_s.argmin()])
+    # np_s_min = np_s.argsort()[:class_cnt]
+    # np_s_min = np_s_min // 6
+    # counts = np.bincount(np_s_min)
+    # values, counts = np.unique(np_s_min, return_counts=True)
+    # ind = np.argmax(counts)
+    # np_s_sum = np.add.reduceat(np_s, np.arange(0, len(np_s), 6))
+
+    ind = np.argmin(np_s)
+
+    print(idx // 2 + 1, ind // 6 + 1)
     all += 1
     # indexing
-    if idx // 6 == np_s.argmin() // 6:
+    if idx // 2 == ind // 6:
         good += 1
-    # if score <= 0.4:
-      # Printing the IDs of faces and score
-      # print(idx, idy, score)
-      # Displaying each matched pair of faces
-      # plt.imshow(facesX[idx])
-      # plt.show()
-      # plt.imshow(facesY[idy])
-      # plt.show()
 
 print((good / all) * 100, "% accuracy")
 # resize images
