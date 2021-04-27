@@ -1,4 +1,4 @@
-tensorflow
+tensorflow-gpu
 matplotlib
 numpy
 scipy
@@ -13,3 +13,4 @@ IPython
 keras
 keras_vggface
 mtcnn
+face_recognition

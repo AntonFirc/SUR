@@ -10,7 +10,6 @@ from scipy.spatial.distance import cosine
 import urllib.request
 from pathlib import Path
 from matplotlib import pyplot as plt
-from mtcnn import MTCNN
 from numpy import asarray
 from PIL import Image
 
