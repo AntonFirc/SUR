@@ -135,16 +135,16 @@ class SpeechGaussian:
 # ]
 # subprocess.call(rm_tmp)
 #
-sg = SpeechGaussian()
-at = AudioTools()
-
-at.process_dataset(sg.train_orig_path, at.sox_remove_silence, output_path=sg.train_path)
-at.process_dataset(sg.dev_orig_path, at.sox_remove_silence, output_path=sg.dev_path)
-
-at.process_dataset(sg.train_path, at.sox_augument_data, aug_options=[0.9, 0.95, 1.05, 1.1])
-
-at.process_dataset(sg.eval_orig_path, at.sox_remove_silence, output_path=sg.eval_path)
-
-sg.train_gmm()
-sg.gmm_evaluate_model()
-sg.gmm_label_data(sg.eval_path.joinpath('eval'))
+# sg = SpeechGaussian()
+# at = AudioTools()
+#
+# at.process_dataset(sg.train_orig_path, at.sox_remove_silence, output_path=sg.train_path)
+# at.process_dataset(sg.dev_orig_path, at.sox_remove_silence, output_path=sg.dev_path)
+#
+# at.process_dataset(sg.train_path, at.sox_augument_data, aug_options=[0.9, 0.95, 1.05, 1.1])
+#
+# at.process_dataset(sg.eval_orig_path, at.sox_remove_silence, output_path=sg.eval_path)
+#
+# sg.train_gmm()
+# sg.gmm_evaluate_model()
+# sg.gmm_label_data(sg.eval_path.joinpath('eval'))

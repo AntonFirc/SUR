@@ -23,6 +23,15 @@ class PhotoFaceRecognition:
         return np.array(fr.face_encodings(img, known_face_locations=locations, num_jitters=10, model="large"))
 
     @classmethod
+    def eval_person(cls, encoding):
+        face_distances = fr.face_distance(cls.known_faces, encoding)
+        class_probs = scipy.special.softmax(face_distances ** -1)
+        log_probs = np.log(class_probs)
+        pred_class = cls.known_classes[np.argmax(log_probs)]
+
+        return pred_class, log_probs
+
+    @classmethod
     def train_model(cls):
         for person_folder in tqdm(cls.TRAIN_DIR.iterdir(), 'Train', len(list(cls.TRAIN_DIR.iterdir())), unit='person'):
 
@@ -63,13 +72,9 @@ class PhotoFaceRecognition:
 
                 if encoding.shape[0] != 0:
                     attempts += 1
-                    face_distances = fr.face_distance(cls.known_faces, encoding)
-
-                    class_probs = scipy.special.softmax(face_distances ** -1)
-                    log_probs = np.log(class_probs)
-                    pred_idx = cls.known_classes[np.argmax(log_probs)]
-                    # print(f"Person {person_idx} - {pred_idx} predicted")
-                    if person_idx == pred_idx:
+                    pred_class, _ = cls.eval_person(encoding)
+                    # print(f"Person {person_idx} - {pred_class} predicted")
+                    if person_idx == pred_class:
                         matches += 1
 
         print(f"Total accuracy: {(matches / attempts) * 100}%")
@@ -89,10 +94,7 @@ class PhotoFaceRecognition:
             encoding = cls.load_image(eval_file)
 
             if encoding.shape[0] != 0:
-                face_distances = fr.face_distance(cls.known_faces, encoding)
-                class_probs = scipy.special.softmax(face_distances ** -1)
-                log_probs = np.log(class_probs)
-                pred_class = cls.known_classes[np.argmax(log_probs)]
+                pred_class, log_probs = cls.eval_person(encoding)
 
                 sort_probs = {}
 
@@ -109,7 +111,7 @@ class PhotoFaceRecognition:
         result_file.close()
 
 
-recognizer = PhotoFaceRecognition()
-recognizer.train_model()
-recognizer.eval_model()
-recognizer.label_data()
+# recognizer = PhotoFaceRecognition()
+# recognizer.train_model()
+# recognizer.eval_model()
+# recognizer.label_data()
