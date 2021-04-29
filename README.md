@@ -1,8 +1,15 @@
-# SUR
-SUR projekt
+# SUR project - indentification system
 
-## Frontalization
-- `python3 face-frontalization/demo.py`
+Project contains implemented identification systems for person identification using speech or face.
+
+Run demo scripts to classify provided data:
+- `python3 demo_speech_gaussian.py`
+- `python3 demo_speech_keras.py`
+- `python3 demo_photo_face_rec.py`
+- `python3 demo_multimodal_probs.py`
+
+Naming of the components follows this scheme: modality_technology
+i.e. `speech_gaussian` -> speech identification using gaussian mixture models
 
 ## Requirements
 - `pip install -r requirements.txt`
