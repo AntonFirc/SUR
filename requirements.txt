@@ -6,10 +6,5 @@ sklearn
 librosa
 tqdm
 imread
-cmake
-dlib
-IPython
 keras
-keras_vggface
-mtcnn
 face_recognition
