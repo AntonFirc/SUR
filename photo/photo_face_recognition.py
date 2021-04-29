@@ -109,9 +109,3 @@ class PhotoFaceRecognition:
                 result_file.write(res_line)
 
         result_file.close()
-
-
-# recognizer = PhotoFaceRecognition()
-# recognizer.train_model()
-# recognizer.eval_model()
-# recognizer.label_data()

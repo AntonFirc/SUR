@@ -110,7 +110,6 @@ class SpeechGaussian:
 
     @classmethod
     def train_gmm(cls):
-        print(cls)
         for i in range(cls.class_cnt):
             speaker_dir = cls.train_path.joinpath(str(i + 1))
             cls.speakers.append(speaker_dir)

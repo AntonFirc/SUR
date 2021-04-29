@@ -1,13 +1,11 @@
 import os
 import math
 import numpy as np
-from tqdm import tqdm
 # use tensorflow==2.4 or tensorflow-gpu==2.4
 import tensorflow as tf
 from tensorflow import keras
 from pathlib import Path
 from tensorflow.keras.optimizers import SGD
-from audio_tools import AudioTools
 import speech_keras_config as Config
 import speech_keras_data_man as dm
 import speech_keras_model as km
@@ -166,9 +164,6 @@ def scheduler(epoch, lr):
     return new_lr
 
 
-# Add callbacks:
-# 'EarlyStopping' to stop training when the model is not enhancing anymore
-# 'ModelCheckPoint' to always keep the model that has the best val_accuracy
 earlystopping_cb = keras.callbacks.EarlyStopping(patience=20, restore_best_weights=True)
 mdlcheckpoint_cb = keras.callbacks.ModelCheckpoint(
     model_save_filename, monitor="val_accuracy", save_best_only=True
