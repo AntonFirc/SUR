@@ -8,9 +8,9 @@ import os
 
 
 class PhotoFaceRecognition:
-    TRAIN_DIR = Path('./dataset_clean/train')
+    TRAIN_DIR = Path('./dataset/train')
     # DEV_DIR = Path('./dataset_clean/train')
-    DEV_DIR = Path('./dataset/dev2_full')
+    DEV_DIR = Path('./dataset/dev')
     EVAL_DIR = Path('./dataset/eval')
 
     known_faces = []

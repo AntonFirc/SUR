@@ -1,5 +1,4 @@
 import os.path
-import subprocess
 from multiprocessing.pool import ThreadPool
 from sklearn.mixture import GaussianMixture
 import librosa as l
@@ -7,7 +6,10 @@ from pathlib import Path
 import numpy as np
 from tqdm import tqdm
 import collections
-from audio_tools import AudioTools
+import warnings
+
+# ignores librosa warnings
+warnings.filterwarnings("ignore", category=UserWarning)
 
 
 class SpeechGaussian:
@@ -19,13 +21,13 @@ class SpeechGaussian:
     class_cnt = 31
     gaussian_cnt = 2
 
-    dev_orig_path = Path('./dataset/dev2')
-    eval_orig_path = Path('./dataset/eval_t')
+    dev_orig_path = Path('./dataset/dev')
+    eval_orig_path = Path('./dataset/eval')
     train_orig_path = Path('./dataset/train_big')
 
-    dev_path = Path('./tmp/dev2')
-    eval_path = Path('./tmp/eval')
-    train_path = Path('./tmp/train_big')
+    dev_path = Path('./temp/dev')
+    eval_path = Path('./temp/eval')
+    train_path = Path('./temp/train_big')
 
     @classmethod
     def waw_2_mfcc(cls, waw_path):
@@ -108,6 +110,7 @@ class SpeechGaussian:
 
     @classmethod
     def train_gmm(cls):
+        print(cls)
         for i in range(cls.class_cnt):
             speaker_dir = cls.train_path.joinpath(str(i + 1))
             cls.speakers.append(speaker_dir)
@@ -126,25 +129,3 @@ class SpeechGaussian:
             )
 
         cls.gmm_ord = collections.OrderedDict(sorted(cls.gmm_arr.items()))
-
-
-# rm_tmp = [
-#     'rm',
-#     '-rf',
-#     './tmp',
-# ]
-# subprocess.call(rm_tmp)
-#
-# sg = SpeechGaussian()
-# at = AudioTools()
-#
-# at.process_dataset(sg.train_orig_path, at.sox_remove_silence, output_path=sg.train_path)
-# at.process_dataset(sg.dev_orig_path, at.sox_remove_silence, output_path=sg.dev_path)
-#
-# at.process_dataset(sg.train_path, at.sox_augument_data, aug_options=[0.9, 0.95, 1.05, 1.1])
-#
-# at.process_dataset(sg.eval_orig_path, at.sox_remove_silence, output_path=sg.eval_path)
-#
-# sg.train_gmm()
-# sg.gmm_evaluate_model()
-# sg.gmm_label_data(sg.eval_path.joinpath('eval'))

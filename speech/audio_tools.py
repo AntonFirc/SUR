@@ -12,7 +12,11 @@ class AudioTools:
     @classmethod
     def sox_remove_silence(cls, speaker_path):
         speaker_idx = str(speaker_path).split('/').pop()
-        dst_dir = cls.out_dir.joinpath(speaker_idx)
+
+        if speaker_idx == 'eval':
+            dst_dir = cls.out_dir
+        else:
+            dst_dir = cls.out_dir.joinpath(speaker_idx)
 
         os.makedirs(dst_dir, exist_ok=True)
 
@@ -118,7 +122,7 @@ class AudioTools:
             os.remove(speaker_file)
 
     @classmethod
-    def process_dataset(cls, dataset_path, task, task_name="Process", output_path=None, thread_count=4, unit='speaker', aug_options=None):
+    def process_dataset(cls, task, dataset_path, task_name="Process", output_path=None, thread_count=4, unit='speaker', aug_options=None, eval_dataset=False):
         assert task is not None
 
         if output_path is not None:
@@ -129,10 +133,13 @@ class AudioTools:
 
         speakers = []
 
-        for speaker_dir in dataset_path.iterdir():
-            if str(speaker_dir).__contains__('.DS_Store'):
-                continue
-            speakers.append(speaker_dir)
+        if eval_dataset:
+            speakers.append(dataset_path)
+        else:
+            for speaker_dir in dataset_path.iterdir():
+                if str(speaker_dir).__contains__('.DS_Store'):
+                    continue
+                speakers.append(speaker_dir)
 
         with ThreadPool(thread_count) as pool:
             list(

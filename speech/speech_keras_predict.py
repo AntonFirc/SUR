@@ -19,11 +19,9 @@ model = keras.models.load_model(Config.model_save_filename)
 
 print(f"Restoring class names from {Config.class_names_savefile}")
 class_names = np.load(Config.class_names_savefile)
-# EVAL_DIR = Path('./dataset/dev2')
-# AudioTools.sox_prepare_dataset(EVAL_DIR, Path('./dataset/dev2_proc'))
 
-EVAL_DIR = Path('../dataset/dev2')
-LABEL_DIR = Path('../dataset/eval')
+EVAL_DIR = Path('./dataset/dev')
+LABEL_DIR = Path('./dataset/eval')
 
 attempts = 0
 true_accept = 0

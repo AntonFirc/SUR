@@ -14,5 +14,4 @@ SUR projekt
 - `module add anaconda3-2019.10`
 - `module add sox-14.4.2`
 - `module add cuda-10.1`
-- `module add cuda-10.1`
 - `module add cudnn/cudnn-8.0.4.30-11.0-linux-x64-intel-19.0.4-fvpdtul`
